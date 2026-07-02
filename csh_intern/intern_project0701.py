@@ -1,0 +1,53 @@
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+import pyodbc
+
+app = Flask(__name__)
+CORS(app)
+
+conn_str = (
+        'DRIVER={ODBC Driver 17 for SQL Server};'
+        'SERVER=MSI;'
+        'DATABASE=intern_project0701;'
+        'UID=sa;'
+        'PWD=Admin1234;'  # 請確認密碼正確
+            )
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    try:
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        # 根據你的 SQL 結構，查詢使用者資訊
+        query = """
+            SELECT display_name, department, staff_id, email, system_role 
+            FROM users 
+            WHERE username = ? AND password = ?
+        """
+        cursor.execute(query, (username, password))
+        row = cursor.fetchone()
+        
+        if row:
+            # 將查詢到的資料封裝回傳
+            user_info = {
+                "display_name": row[0],
+                "department": row[1],
+                "staff_id": row[2],
+                "email": row[3],
+                "system_role": row[4]
+            }
+            return jsonify({"status": "success", "user": user_info})
+        else:
+            return jsonify({"status": "error", "message": "帳號或密碼錯誤"})
+            
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5001)

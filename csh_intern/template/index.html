@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>系統登入</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f7f6; }
+        .login-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        #message { margin-top: 15px; text-align: center; color: red; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>使用者登入</h2>
+    <input type="text" id="username" placeholder="請輸入帳號">
+    <input type="password" id="password" placeholder="請輸入密碼">
+    <button onclick="performLogin()">登入</button>
+    <div id="message"></div>
+</div>
+
+<script>
+async function performLogin() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const messageDiv = document.getElementById('message');
+
+    try {
+        const response = await fetch('http://localhost:5000/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const user = result.user;
+            document.body.innerHTML = `
+                <div class="login-container">
+                    <h3>登入成功！</h3>
+                    <p>姓名: ${user.display_name}</p>
+                    <p>部門: ${user.department}</p>
+                    <p>員編: ${user.staff_id}</p>
+                    <p>信箱: ${user.email}</p>
+                    <p>職位: ${user.system_role}</p>
+                </div>
+            `;
+        } else {
+            messageDiv.innerText = result.message;
+        }
+    } catch (error) {
+        messageDiv.innerText = '無法連接到伺服器';
+    }
+}
+</script>
+</body>
+</html>
